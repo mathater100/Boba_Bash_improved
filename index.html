@@ -317,7 +317,22 @@
       box-shadow:
         0 3px 6px rgba(0,0,0,.42),
         inset 2px 2px 3px rgba(255,255,255,.10);
-      animation: pearl-bob 4.8s ease-in-out infinite alternate;
+      animation:
+        pearl-drift var(--pearl-duration, 4.8s)
+        ease-in-out var(--pearl-delay, 0s) infinite alternate;
+      will-change: transform;
+    }
+
+    .jelly-piece {
+      border-radius: 7px 10px 8px 6px;
+      border: 1px solid rgba(232, 205, 255, .25);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.38), rgba(255,255,255,0) 33%),
+        linear-gradient(145deg, #c9a6df 0%, #9a72bd 48%, #68457f 100%);
+      box-shadow:
+        0 3px 7px rgba(20, 10, 28, .34),
+        inset 1px 1px 2px rgba(255,255,255,.28),
+        inset -2px -3px 5px rgba(61, 37, 78, .22);
     }
 
     .sticker {
@@ -616,9 +631,28 @@
       70% { transform: rotate(2deg); }
     }
 
-    @keyframes pearl-bob {
-      from { transform: translateY(0); }
-      to { transform: translateY(-1px); }
+    @keyframes pearl-drift {
+      0% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+      }
+
+      35% {
+        transform:
+          translate3d(var(--pearl-x1), var(--pearl-y1), 0)
+          rotate(var(--pearl-r1));
+      }
+
+      68% {
+        transform:
+          translate3d(var(--pearl-x2), var(--pearl-y2), 0)
+          rotate(var(--pearl-r2));
+      }
+
+      100% {
+        transform:
+          translate3d(var(--pearl-x3), var(--pearl-y3), 0)
+          rotate(var(--pearl-r3));
+      }
     }
 
     @keyframes result-in {
@@ -840,6 +874,15 @@
       return state.chaosMode ? state.chaosPearls : getStandardPearlCount();
     }
 
+    function randomBetween(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function signedPx(min, max) {
+      const magnitude = randomBetween(min, max);
+      return (Math.random() < 0.5 ? -magnitude : magnitude) + "px";
+    }
+
     function renderPearls() {
       const container = $("pearls");
       container.innerHTML = "";
@@ -848,25 +891,50 @@
 
       for (let i = 0; i < state.pearlCount; i++) {
         const pearl = document.createElement("span");
-        pearl.className = "pearl";
-        pearl.style.left = `${8 + Math.random() * 84}%`;
-        pearl.style.top = `${58 + Math.random() * 30}%`;
-        pearl.style.animationDelay = `${Math.random() * 3}s`;
+        const isJelly = state.topping === "jelly";
 
-        if (state.chaosMode) {
-          const size = 15 + Math.random() * 8;
-          pearl.style.width = `${size}px`;
-          pearl.style.height = `${size}px`;
-        }
+        pearl.className = isJelly ? "pearl jelly-piece" : "pearl";
+
+        // Each piece gets its own size so the cup feels organic.
+        const width = isJelly
+          ? randomBetween(18, 29)
+          : randomBetween(12, 22);
+
+        pearl.style.width = width + "px";
+        pearl.style.height = isJelly
+          ? randomBetween(11, 18) + "px"
+          : width + "px";
+
+        // Keep the pieces mostly in the lower part of the drink.
+        // A little depth variation makes some appear farther submerged.
+        pearl.style.left = randomBetween(7, 87) + "%";
+        pearl.style.top = randomBetween(61, 89) + "%";
+
+        // Every pearl gets its own tiny path. Y is allowed to move both
+        // upward and downward, while X and rotation also vary.
+        pearl.style.setProperty("--pearl-x1", signedPx(0.5, 2.2));
+        pearl.style.setProperty("--pearl-y1", signedPx(0.4, 1.6));
+        pearl.style.setProperty("--pearl-r1", randomBetween(-7, 7) + "deg");
+
+        pearl.style.setProperty("--pearl-x2", signedPx(0.4, 2.6));
+        pearl.style.setProperty("--pearl-y2", signedPx(0.4, 1.8));
+        pearl.style.setProperty("--pearl-r2", randomBetween(-9, 9) + "deg");
+
+        pearl.style.setProperty("--pearl-x3", signedPx(0.3, 1.8));
+        pearl.style.setProperty("--pearl-y3", signedPx(0.2, 1.4));
+        pearl.style.setProperty("--pearl-r3", randomBetween(-6, 6) + "deg");
+
+        // Different timing stops the whole cup from moving like one organism.
+        pearl.style.setProperty("--pearl-duration", randomBetween(4.0, 6.4) + "s");
+        pearl.style.setProperty("--pearl-delay", randomBetween(-5.5, 0) + "s");
+
+        // Tiny depth cues without making the pearls disappear.
+        pearl.style.opacity = randomBetween(0.78, 1).toFixed(2);
+        pearl.style.filter = "blur(" + randomBetween(0, 0.35).toFixed(2) + "px)";
 
         if (state.topping === "popping") {
           pearl.style.background =
             "radial-gradient(circle at 30% 25%, #fff0f0 0 9%, transparent 10%), radial-gradient(circle at 35% 35%, #b76576 0 48%, #64283b 80%)";
-        } else if (state.topping === "jelly") {
-          pearl.style.width = "24px";
-          pearl.style.height = "16px";
-          pearl.style.borderRadius = "7px";
-          pearl.style.background = "linear-gradient(135deg, rgba(255,255,255,.18), #5b3c5f)";
         }
 
         container.appendChild(pearl);
