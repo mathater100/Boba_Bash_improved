@@ -317,7 +317,7 @@
       box-shadow:
         0 3px 6px rgba(0,0,0,.42),
         inset 2px 2px 3px rgba(255,255,255,.10);
-      animation: pearl-bob 2s ease-in-out infinite alternate;
+      animation: pearl-bob 4.8s ease-in-out infinite alternate;
     }
 
     .sticker {
@@ -618,7 +618,7 @@
 
     @keyframes pearl-bob {
       from { transform: translateY(0); }
-      to { transform: translateY(-4px); }
+      to { transform: translateY(-1px); }
     }
 
     @keyframes result-in {
@@ -850,8 +850,8 @@
         const pearl = document.createElement("span");
         pearl.className = "pearl";
         pearl.style.left = `${8 + Math.random() * 84}%`;
-        pearl.style.top = `${46 + Math.random() * 43}%`;
-        pearl.style.animationDelay = `${Math.random() * 2}s`;
+        pearl.style.top = `${58 + Math.random() * 30}%`;
+        pearl.style.animationDelay = `${Math.random() * 3}s`;
 
         if (state.chaosMode) {
           const size = 15 + Math.random() * 8;
