@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #17110e;
       --cream: #fff3e4;
       --muted: #b9a89a;
       --soft: #89786a;
@@ -28,14 +27,55 @@
       color: var(--cream);
       font-family: "DM Sans", system-ui, sans-serif;
       background:
-        radial-gradient(circle at 12% 8%, rgba(183, 156, 255, 0.08), transparent 28%),
-        radial-gradient(circle at 88% 18%, rgba(255, 189, 114, 0.08), transparent 24%),
+        radial-gradient(circle at 12% 8%, rgba(183, 156, 255, 0.09), transparent 28%),
+        radial-gradient(circle at 88% 18%, rgba(255, 189, 114, 0.09), transparent 24%),
         linear-gradient(135deg, #110c0a 0%, #1b130f 55%, #100b09 100%);
       overflow-x: hidden;
     }
     button, input { font: inherit; }
     button { cursor: pointer; color: inherit; }
     button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    /* ambient backdrop */
+    .bg-stage {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .bg-orb {
+      position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.55;
+      animation: orb-drift 14s ease-in-out infinite alternate;
+    }
+    .bg-orb.a {
+      width: 280px; height: 280px; left: -40px; top: 8%;
+      background: rgba(183, 156, 255, 0.18);
+    }
+    .bg-orb.b {
+      width: 320px; height: 320px; right: -60px; top: 18%;
+      background: rgba(255, 189, 114, 0.16);
+      animation-duration: 18s; animation-delay: -4s;
+    }
+    .bg-orb.c {
+      width: 240px; height: 240px; left: 40%; bottom: 6%;
+      background: rgba(143, 210, 163, 0.10);
+      animation-duration: 16s; animation-delay: -8s;
+    }
+    .bubble {
+      position: absolute; bottom: -40px; border-radius: 50%;
+      border: 1px solid rgba(255, 244, 228, 0.14);
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.22), rgba(255,255,255,.04) 55%, transparent 70%);
+      animation: bubble-rise linear infinite;
+      opacity: 0;
+    }
+    .bubble:nth-child(1) { left: 8%;  width: 10px; height: 10px; animation-duration: 11s; animation-delay: 0s; }
+    .bubble:nth-child(2) { left: 18%; width: 6px;  height: 6px;  animation-duration: 14s; animation-delay: 2s; }
+    .bubble:nth-child(3) { left: 28%; width: 14px; height: 14px; animation-duration: 12s; animation-delay: 5s; }
+    .bubble:nth-child(4) { left: 42%; width: 8px;  height: 8px;  animation-duration: 16s; animation-delay: 1s; }
+    .bubble:nth-child(5) { left: 55%; width: 11px; height: 11px; animation-duration: 13s; animation-delay: 7s; }
+    .bubble:nth-child(6) { left: 68%; width: 7px;  height: 7px;  animation-duration: 15s; animation-delay: 3s; }
+    .bubble:nth-child(7) { left: 78%; width: 13px; height: 13px; animation-duration: 11s; animation-delay: 6s; }
+    .bubble:nth-child(8) { left: 88%; width: 9px;  height: 9px;  animation-duration: 17s; animation-delay: 4s; }
+    .bubble:nth-child(9) { left: 12%; width: 5px;  height: 5px;  animation-duration: 19s; animation-delay: 9s; }
+    .bubble:nth-child(10){ left: 95%; width: 12px; height: 12px; animation-duration: 14s; animation-delay: 8s; }
+
     .grain {
       position: fixed; inset: 0; pointer-events: none; opacity: 0.028; z-index: 20;
       background-image:
@@ -43,7 +83,10 @@
         radial-gradient(circle at 75% 60%, #fff 0 0.6px, transparent 0.7px);
       background-size: 7px 7px, 9px 9px;
     }
-    .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    .wrap {
+      position: relative; z-index: 1;
+      width: min(1120px, calc(100% - 32px)); margin: 0 auto;
+    }
     .topbar {
       padding: 24px 0 6px; display: flex; align-items: center;
       justify-content: space-between; gap: 18px;
@@ -59,6 +102,12 @@
       font-size: 17px; letter-spacing: .09em;
     }
     .brand-sub { margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .top-right { display: flex; align-items: center; gap: 10px; }
+    .event-pill {
+      padding: 8px 12px; border: 1px solid rgba(255, 189, 114, 0.28);
+      border-radius: 999px; background: rgba(255, 189, 114, 0.08);
+      color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .14em;
+    }
     .status {
       padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px;
       background: rgba(255,255,255,0.025); color: #d9cec3; font-size: 12px;
@@ -67,6 +116,7 @@
     .dot {
       width: 7px; height: 7px; border-radius: 50%; background: var(--green);
       box-shadow: 0 0 12px rgba(143, 210, 163, 0.75);
+      animation: pulse-dot 2.4s ease-in-out infinite;
     }
     .hero { padding: 42px 0 28px; max-width: 760px; }
     .eyebrow, .kicker {
@@ -100,6 +150,7 @@
       content: ""; position: absolute; width: 430px; height: 430px; border-radius: 50%;
       background: rgba(255, 189, 114, 0.075); filter: blur(72px);
       left: 50%; top: 50%; transform: translate(-50%, -49%); z-index: -2;
+      animation: soft-glow 6s ease-in-out infinite alternate;
     }
     .cup-panel::after {
       content: ""; position: absolute; width: 220px; height: 28px; border-radius: 50%;
@@ -115,7 +166,6 @@
       font-family: ui-monospace, monospace; font-size: 10px;
     }
 
-    /* ===== REBUILT CUP ===== */
     .cup-wrap {
       position: relative; width: 260px; height: 400px; z-index: 2;
       transform-origin: 50% 90%;
@@ -125,35 +175,81 @@
       position: relative; width: 260px; height: 400px;
       filter: drop-shadow(0 18px 16px rgba(0,0,0,.28));
     }
+
+    /* realistic straw — continuous axis through lid hole */
     .cup-straw {
-      position: absolute; left: 50%; top: 4px; width: 16px; height: 100px;
+      position: absolute;
+      left: 50%;
+      top: 2px;
+      width: 15px;
+      height: 104px;
       transform: translateX(calc(-50% - 9px)) rotate(-3deg);
       transform-origin: 50% 0%;
-      border-radius: 9px;
-      background: linear-gradient(90deg, #8d5a32 0%, #c48a52 16%, #f6deba 46%, #c4884e 78%, #7a4b27 100%);
-      box-shadow: inset 3px 0 4px rgba(255,255,255,.38), inset -3px 0 5px rgba(70,35,14,.38), 2px 10px 14px rgba(0,0,0,.28);
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg,
+          #6b3f1f 0%,
+          #a86a38 12%,
+          #e8c89a 28%,
+          #f7e6c8 42%,
+          #d4a66a 58%,
+          #a86a38 78%,
+          #5c3518 100%);
+      box-shadow:
+        inset 2px 0 3px rgba(255,255,255,.45),
+        inset -2px 0 4px rgba(50,25,10,.45),
+        1px 8px 12px rgba(0,0,0,.22);
       z-index: 30;
     }
+    /* plastic highlight stripe */
     .cup-straw::before {
-      content: ""; position: absolute; left: 3px; top: 8px; width: 3.5px; height: 78px;
-      border-radius: 999px; background: rgba(255,250,240,.42); filter: blur(.4px);
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 6px;
+      width: 3px;
+      height: 86px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.12));
+      filter: blur(0.3px);
     }
+    /* open tube tip */
     .cup-straw::after {
-      content: ""; position: absolute; left: 1px; right: 1px; top: -3px; height: 9px;
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -2px;
+      width: 15px;
+      height: 8px;
+      transform: translateX(-50%);
       border-radius: 50%;
-      background: radial-gradient(ellipse at 50% 40%, #ffe9c8, #b07a48 70%);
-      box-shadow: inset 0 1px 2px rgba(255,255,255,.4);
+      background:
+        radial-gradient(ellipse at 50% 45%, #2a180e 0 42%, #c48a52 58%, #e8c89a 100%);
+      box-shadow:
+        inset 0 2px 3px rgba(0,0,0,.55),
+        0 1px 0 rgba(255,255,255,.25);
     }
     .cup-straw-in {
-      position: absolute; left: 50%; top: 96px; width: 15px; height: 168px;
+      position: absolute;
+      left: 50%;
+      top: 96px;
+      width: 14px;
+      height: 172px;
       transform: translateX(calc(-50% - 9px)) rotate(-3deg);
       transform-origin: 50% 0%;
-      border-radius: 9px;
-      background: linear-gradient(90deg, rgba(90,50,24,.55) 0%, rgba(196,138,82,.42) 40%, rgba(90,50,24,.5) 100%);
-      box-shadow: inset 2px 0 3px rgba(255,255,255,.18);
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg,
+          rgba(70,40,18,.42) 0%,
+          rgba(196,138,82,.28) 35%,
+          rgba(232,200,154,.22) 50%,
+          rgba(196,138,82,.28) 65%,
+          rgba(70,40,18,.42) 100%);
+      box-shadow: inset 1px 0 2px rgba(255,255,255,.12);
       z-index: 11;
-      opacity: .52;
+      opacity: 0.58;
     }
+
     .cup-lid {
       position: absolute; top: 78px; left: 10px; width: 240px; height: 50px;
       z-index: 24; pointer-events: none;
@@ -208,6 +304,7 @@
       background:
         linear-gradient(90deg, rgba(42,24,16,.32) 0%, rgba(255,255,255,.04) 18%, rgba(255,255,255,.16) 46%, rgba(255,255,255,.03) 74%, rgba(28,14,10,.38) 100%),
         var(--drink);
+      transition: background .35s ease;
     }
     .cup-meniscus {
       position: absolute; left: -4%; right: -4%; top: -10px; height: 24px; border-radius: 50%;
@@ -370,7 +467,28 @@
       transition: .25s ease; box-shadow: 0 12px 30px rgba(0,0,0,.3); z-index: 30; font-size: 12px;
     }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .foot {
+      padding: 28px 0 40px; text-align: center; color: #6f6155; font-size: 11px; letter-spacing: .08em;
+    }
 
+    @keyframes orb-drift {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(18px, -22px, 0) scale(1.08); }
+    }
+    @keyframes bubble-rise {
+      0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+      8%   { opacity: 0.45; }
+      70%  { opacity: 0.25; }
+      100% { transform: translate3d(12px, -110vh, 0); opacity: 0; }
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 12px rgba(143, 210, 163, 0.75); }
+      50% { opacity: 0.7; box-shadow: 0 0 18px rgba(143, 210, 163, 0.95); }
+    }
+    @keyframes soft-glow {
+      from { opacity: 0.85; transform: translate(-50%, -49%) scale(1); }
+      to { opacity: 1; transform: translate(-50%, -49%) scale(1.06); }
+    }
     @keyframes cup-shake {
       0%, 100% { transform: rotate(0); }
       12% { transform: rotate(8deg) translateY(-2px); }
@@ -406,6 +524,7 @@
     @media (max-width: 620px) {
       .wrap { width: min(100% - 20px, 1120px); }
       .status { display: none; }
+      .event-pill { display: none; }
       .hero { padding-top: 30px; }
       .hero h1 { font-size: 46px; }
       .cup-panel { min-height: 520px; padding-inline: 12px; }
@@ -425,6 +544,15 @@
   </style>
 </head>
 <body>
+  <div class="bg-stage" aria-hidden="true">
+    <div class="bg-orb a"></div>
+    <div class="bg-orb b"></div>
+    <div class="bg-orb c"></div>
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    <div class="bubble"></div>
+  </div>
   <div class="grain"></div>
   <div class="wrap">
     <header class="topbar">
@@ -435,9 +563,12 @@
           <div class="brand-sub">the boba making machine</div>
         </div>
       </div>
-      <div class="status">
-        <span class="dot"></span>
-        <span id="status">lab is suspiciously calm</span>
+      <div class="top-right">
+        <div class="event-pill">BOBA BASH</div>
+        <div class="status">
+          <span class="dot"></span>
+          <span id="status">lab is suspiciously calm</span>
+        </div>
       </div>
     </header>
     <main>
@@ -539,6 +670,7 @@
         </div>
       </section>
     </main>
+    <footer class="foot">BOBA LAB · built for BOBA BASH</footer>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
