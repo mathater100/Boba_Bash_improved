@@ -169,6 +169,39 @@
       transform-origin: 50% 88%;
     }
     .cup-wrap.shake { animation: cup-shake .78s cubic-bezier(.36,.07,.19,.97) both; }
+    .cup-wrap.serve-glow {
+      animation: serve-bright 0.42s ease-out both;
+    }
+    .cup-panel.serve-glow::before {
+      animation: serve-halo 0.42s ease-out both !important;
+    }
+    .cup-wrap.chaos-tick {
+      animation: chaos-wiggle 0.38s ease-in-out both;
+    }
+    .dot.chaos-tick {
+      animation: chaos-dot 0.4s ease-out both;
+    }
+    .bg-stage.chaos-tick .bubble {
+      animation-duration: 7s !important;
+    }
+    @keyframes serve-bright {
+      0%, 100% { filter: brightness(1); }
+      40% { filter: brightness(1.08); }
+    }
+    @keyframes serve-halo {
+      0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      40% { opacity: 1.25; transform: translate(-50%, -50%) scale(1.05); }
+    }
+    @keyframes chaos-wiggle {
+      0%, 100% { transform: rotate(0); }
+      28% { transform: rotate(-1.7deg); }
+      58% { transform: rotate(1.4deg); }
+      82% { transform: rotate(-0.5deg); }
+    }
+    @keyframes chaos-dot {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 12px rgba(143, 210, 163, 0.75); }
+      40% { transform: scale(1.55); box-shadow: 0 0 20px rgba(143, 210, 163, 1); }
+    }
     .cup-rig {
       position: relative;
       width: 268px;
@@ -975,6 +1008,8 @@
       "linear-gradient(135deg, rgba(255,255,255,.38), rgba(255,255,255,0) 33%), linear-gradient(145deg, #f5d98a 0%, #e0b03a 48%, #a07818 100%)",
     ];
     const $ = (id) => document.getElementById(id);
+    let chaosTickTimer = 0;
+    let serveGlowTimer = 0;
     function toast(message) {
       const el = $("toast");
       el.textContent = message;
@@ -1036,8 +1071,22 @@
         pearl.style.setProperty("--pearl-r3", randomBetween(-6, 6) + "deg");
         pearl.style.setProperty("--pearl-duration", randomBetween(4.0, 6.4) + "s");
         pearl.style.setProperty("--pearl-delay", randomBetween(-5.5, 0) + "s");
-        pearl.style.opacity = randomBetween(0.78, 1).toFixed(2);
-        pearl.style.filter = "blur(" + randomBetween(0, 0.35).toFixed(2) + "px)";
+        if (!isJelly && state.topping !== "popping") {
+          const depth = Math.random();
+          if (depth < 0.3) {
+            pearl.style.opacity = randomBetween(0.74, 0.86).toFixed(2);
+            pearl.style.filter = "blur(" + randomBetween(0.18, 0.42).toFixed(2) + "px)";
+          } else if (depth > 0.84) {
+            pearl.style.opacity = randomBetween(0.94, 1).toFixed(2);
+            pearl.style.filter = "blur(" + randomBetween(0, 0.1).toFixed(2) + "px)";
+          } else {
+            pearl.style.opacity = randomBetween(0.8, 0.96).toFixed(2);
+            pearl.style.filter = "blur(" + randomBetween(0.05, 0.28).toFixed(2) + "px)";
+          }
+        } else {
+          pearl.style.opacity = randomBetween(0.78, 1).toFixed(2);
+          pearl.style.filter = "blur(" + randomBetween(0, 0.35).toFixed(2) + "px)";
+        }
         if (state.topping === "popping") {
           pearl.style.background =
             "radial-gradient(circle at 30% 25%, #fff0f0 0 9%, transparent 10%), radial-gradient(circle at 35% 35%, #b76576 0 48%, #64283b 80%)";
@@ -1143,6 +1192,20 @@
       $("note").textContent = `Chaos selected ${state.chaosPearls} pearls. Nobody approved this.`;
       render();
       toast(`CHAOS MODE — ${state.chaosPearls} pearls`);
+      const cup = $("cupWrap");
+      const stage = document.querySelector(".bg-stage");
+      const dot = document.querySelector(".dot");
+      cup.classList.remove("chaos-tick");
+      void cup.offsetWidth;
+      cup.classList.add("chaos-tick");
+      if (stage) { stage.classList.remove("chaos-tick"); void stage.offsetWidth; stage.classList.add("chaos-tick"); }
+      if (dot) { dot.classList.remove("chaos-tick"); void dot.offsetWidth; dot.classList.add("chaos-tick"); }
+      clearTimeout(chaosTickTimer);
+      chaosTickTimer = setTimeout(() => {
+        cup.classList.remove("chaos-tick");
+        if (stage) stage.classList.remove("chaos-tick");
+        if (dot) dot.classList.remove("chaos-tick");
+      }, 420);
     });
     $("serveBtn").addEventListener("click", () => {
       const finalChaos = Math.max(0, Math.min(100,
@@ -1173,23 +1236,36 @@
         (state.flavor === "classic" ? 8 : 0) +
         (state.topping === "pearls" ? 12 : 0)
       ));
-      $("resultTitle").textContent = title;
-      $("resultText").textContent = text;
-      $("resultVibe").textContent = vibe;
-      $("resultChaos").textContent = `${finalChaos}%`;
-      $("resultPearl").textContent = `${pearlEnergy}%`;
-      $("resultTags").innerHTML = [
-        flavors[state.flavor].name,
-        toppings[state.topping],
-        sweetnessLabel(state.sweetness),
-      ].map((tag) => `<span class="tag">${tag}</span>`).join("");
-      const result = $("result");
-      result.classList.remove("hidden", "reveal");
-      void result.offsetWidth;
-      result.classList.add("reveal");
-      result.scrollIntoView({ behavior: "smooth", block: "center" });
-      $("note").textContent = "Lab report ready. Please act normal.";
-      toast("lab report generated");
+      const cup = $("cupWrap");
+      const panel = document.querySelector(".cup-panel");
+      cup.classList.remove("serve-glow");
+      if (panel) panel.classList.remove("serve-glow");
+      void cup.offsetWidth;
+      cup.classList.add("serve-glow");
+      if (panel) panel.classList.add("serve-glow");
+      clearTimeout(serveGlowTimer);
+      const showReport = () => {
+        cup.classList.remove("serve-glow");
+        if (panel) panel.classList.remove("serve-glow");
+        $("resultTitle").textContent = title;
+        $("resultText").textContent = text;
+        $("resultVibe").textContent = vibe;
+        $("resultChaos").textContent = `${finalChaos}%`;
+        $("resultPearl").textContent = `${pearlEnergy}%`;
+        $("resultTags").innerHTML = [
+          flavors[state.flavor].name,
+          toppings[state.topping],
+          sweetnessLabel(state.sweetness),
+        ].map((tag) => `<span class="tag">${tag}</span>`).join("");
+        const result = $("result");
+        result.classList.remove("hidden", "reveal");
+        void result.offsetWidth;
+        result.classList.add("reveal");
+        result.scrollIntoView({ behavior: "smooth", block: "center" });
+        $("note").textContent = "Lab report ready. Please act normal.";
+        toast("lab report generated");
+      };
+      serveGlowTimer = setTimeout(showReport, 380);
     });
     $("againBtn").addEventListener("click", () => {
       $("result").classList.add("hidden");
